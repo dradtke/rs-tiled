@@ -257,6 +257,36 @@ pub struct Tileset {
 }
 
 impl Tileset {
+	/// Given a tile gid, return the coordinates of its top-left corner.
+	/// Returns None if the tile isn't in this tileset.
+	pub fn get_orthogonal_tile_coords(&self, gid: u32) -> Option<(u32, u32)> {
+		if gid < self.first_gid {
+			return None;
+		}
+
+		let mut offset_x = gid - self.first_gid;
+		let mut offset_y = 0;
+
+		// TODO: figure out if it's in an image besides the first.
+		let ref image = self.images[0];
+		let num_tiles_x = ((image.width as u32 - (self.margin * 2)) + self.spacing) / (self.tile_width + self.spacing);
+		let num_tiles_y = ((image.height as u32 - (self.margin * 2)) + self.spacing) / (self.tile_height + self.spacing);
+
+		if offset_x >= (num_tiles_x * num_tiles_y) {
+			return None;
+		}
+
+		while offset_x >= num_tiles_x {
+			offset_y += 1;
+			offset_x -= num_tiles_x;
+		}
+
+		let x = self.margin + ((self.tile_width + self.spacing) * offset_x);
+		let y = self.margin + ((self.tile_height + self.spacing) * offset_y);
+
+		Some((x, y))
+	}
+
     fn new<R: Read>(parser: &mut EventReader<R>, attrs: Vec<OwnedAttribute>) -> Result<Tileset, TiledError> {
         let ((s, m), (g, n, w, h)) = get_attrs!(
            attrs,
